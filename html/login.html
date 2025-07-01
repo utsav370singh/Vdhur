@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="icon" href="../images/logo.png">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <link rel="stylesheet" href="./css/login.css" />
+  <title>VDHUR - Login</title>
+</head>
+<body onload="myfunction()">
+  <div id="load">
+    <div class="spinner"></div>
+  </div>
+
+  <img src="../images/signupill.png" alt="Illustration" />
+  
+  <!-- Login Form -->
+  <div class="login">
+    <div class="welcome">
+      <h1 class="titletext">Welcome Back &#x1F917;</h1>
+      <span>Please enter your details.</span>
+    </div>
+    <div class="inputs">
+      <span>Email</span>
+      <input class="inputbox" type="email" placeholder="Enter your email" id="loginEmail" required />
+      
+      <span>Password</span>
+      <div class="password-container">
+        <input type="password" class="inputbox" placeholder="••••••••" id="loginPassword" required />
+        <i class="fas fa-eye-slash" id="toggleLoginPassword"></i>
+      </div>
+    </div>
+    <div class="forgotpass">
+      <span>Forgot Password</span>
+    </div>
+    <p class="back"><a class="tag" href="../index.html">&#8592; Back</a></p>
+    <div class="button">
+      <button class="signin" id="loginButton">Sign in</button>
+    </div>
+    <div class="signupline">
+      <span>Don't have an account?</span>
+      <span class="signupbutton">Sign up</span>
+    </div>
+  </div>
+  
+  <!-- Register Form -->
+  <div class="register">
+    <div class="welcome">
+      <h1 class="titletext">Create an account</h1>
+      <span>Let's get started.</span>
+    </div>
+    <div class="inputs">
+      <span>Username</span>
+      <input class="inputbox" placeholder="Enter your username" id="signupUsername" required />
+      
+      <span>Email</span>
+      <input class="inputbox" type="email" placeholder="Enter your email" id="signupEmail" required />
+      
+      <span>Password</span>
+      <div class="password-container">
+        <input type="password" class="inputbox" placeholder="••••••••" id="signupPassword" required />
+        <i class="fas fa-eye-slash" id="toggleSignupPassword"></i>
+      </div>
+    </div>
+    <p class="back-1"><a class="tag1" href="../index.html">&#8592; Back</a></p>
+    <div class="button">
+      <button class="signin" id="signupButton">Sign up</button>
+    </div>
+    <div class="signupline">
+      <span>Already have an account?</span>
+      <span class="signinbutton">Sign in</span>
+    </div>
+  </div>
+
+  <!-- Alert messages -->
+  <div class="alert" id="emptyFieldsAlert">Please fill in all fields!</div>
+  <div class="alert" id="loginErrorAlert">Invalid email or password!</div>
+  <div class="alert" id="loginAlert">Sign in successful! Redirecting...</div>
+  <div class="alert" id="signupAlert">Sign up successful!</div>
+
+  <script>
+    // Store user credentials in localStorage
+    const userCredentials = JSON.parse(localStorage.getItem('userCredentials')) || {};
+
+    // DOM Elements
+    const signinBtn = document.querySelector(".signinbutton");
+    const signupBtn = document.querySelector(".signupbutton");
+    const registerForm = document.querySelector(".register");
+    const loginForm = document.querySelector(".login");
+    const loginButton = document.getElementById("loginButton");
+    const signupButton = document.getElementById("signupButton");
+    const emptyFieldsAlert = document.getElementById("emptyFieldsAlert");
+    const loginErrorAlert = document.getElementById("loginErrorAlert");
+    const loginAlert = document.getElementById("loginAlert");
+    const signupAlert = document.getElementById("signupAlert");
+    
+    // Toggle between login and register forms
+    signupBtn.addEventListener("click", () => {
+      registerForm.style.display = "block";
+      loginForm.style.display = "none";
+      resetForms();
+    });
+    
+    signinBtn.addEventListener("click", () => {
+      registerForm.style.display = "none";
+      loginForm.style.display = "block";
+      resetForms();
+    });
+    
+    // Login functionality
+   loginButton.addEventListener("click", () => {
+  const emailInput = document.getElementById("loginEmail");
+  const passwordInput = document.getElementById("loginPassword");
+  
+  if (!validateInputs(emailInput, passwordInput)) {
+    showAlert(emptyFieldsAlert);
+    return;
+  }
+  
+  if (authenticateUser(emailInput.value, passwordInput.value)) {
+    // Get the user data from stored credentials
+    const userData = userCredentials[emailInput.value];
+    
+    // Store the current user in localStorage
+    localStorage.setItem('currentUser', JSON.stringify({
+      email: emailInput.value,
+      username: userData.username
+    }));
+    
+    showAlert(loginAlert);
+    resetForm(emailInput, passwordInput);
+    
+    setTimeout(() => {
+      window.location.href = "../index.html";
+    }, 1500);
+  } else {
+    showAlert(loginErrorAlert);
+  }
+});
+    
+    // Signup functionality
+    signupButton.addEventListener("click", () => {
+      const usernameInput = document.getElementById("signupUsername");
+      const emailInput = document.getElementById("signupEmail");
+      const passwordInput = document.getElementById("signupPassword");
+      
+      if (!validateInputs(usernameInput, emailInput, passwordInput)) {
+        showAlert(emptyFieldsAlert);
+        return;
+      }
+      
+      // Register new user
+      registerUser(emailInput.value, passwordInput.value, usernameInput.value);
+      
+      // Show success message
+      showAlert(signupAlert);
+      resetForm(usernameInput, emailInput, passwordInput);
+      
+      // Switch to login form after successful signup
+      setTimeout(() => {
+        registerForm.style.display = "none";
+        loginForm.style.display = "block";
+      }, 1500);
+    });
+    
+    // Password toggle functionality
+    setupPasswordToggle("toggleLoginPassword", "loginPassword");
+    setupPasswordToggle("toggleSignupPassword", "signupPassword");
+    
+    // Preloader
+    function myfunction() {
+      const preloader = document.getElementById("load");
+      preloader.style.opacity = "0";
+      setTimeout(() => {
+        preloader.style.display = "none";
+      }, 300);
+    }
+    
+    // Authentication Functions
+    function registerUser(email, password, username) {
+      userCredentials[email] = {
+        password: password,
+        username: username
+      };
+      localStorage.setItem('userCredentials', JSON.stringify(userCredentials));
+    }
+    
+    function authenticateUser(email, password) {
+      const user = userCredentials[email];
+      return user && user.password === password;
+    }
+    
+    // Helper Functions
+    function validateInputs(...inputs) {
+      return inputs.every(input => input.value.trim() !== "");
+    }
+    
+    function showAlert(alertElement) {
+      alertElement.classList.add("show");
+      setTimeout(() => {
+        alertElement.classList.remove("show");
+      }, 3000);
+    }
+    
+    function resetForm(...inputs) {
+      inputs.forEach(input => input.value = "");
+    }
+    
+    function resetForms() {
+      document.querySelectorAll(".inputbox").forEach(input => input.value = "");
+    }
+    
+    function setupPasswordToggle(toggleId, passwordId) {
+      const toggle = document.getElementById(toggleId);
+      const passwordInput = document.getElementById(passwordId);
+      
+      toggle.addEventListener("click", function() {
+        if (passwordInput.type === "password") {
+          passwordInput.type = "text";
+          toggle.classList.replace("fa-eye-slash", "fa-eye");
+        } else {
+          passwordInput.type = "password";
+          toggle.classList.replace("fa-eye", "fa-eye-slash");
+        }
+      });
+    }
+    
+    // Add basic form submission on Enter key
+    document.querySelectorAll(".inputbox").forEach(input => {
+      input.addEventListener("keypress", function(e) {
+        if (e.key === "Enter") {
+          if (loginForm.style.display !== "none") {
+            loginButton.click();
+          } else {
+            signupButton.click();
+          }
+        }
+      });
+    });
+  </script>
+</body>
+</html>
